@@ -1,0 +1,48 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Moments collection rules
+    match /moments/{momentId} {
+      allow read: if true; // Anyone can read moments
+      allow create: if isAuthenticated() 
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow update: if isAuthenticated() 
+        && (resource.data.userId == request.auth.uid 
+            || request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['likes', 'comments']));
+      allow delete: if isAuthenticated() 
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // Devotees collection rules
+    match /devotees/{devoteeId} {
+      allow read: if true; // Anyone can read devotee profiles
+      allow create: if isAuthenticated() 
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() 
+        && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() 
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // Comments subcollection rules (if we decide to use subcollections)
+    match /moments/{momentId}/comments/{commentId} {
+      allow read: if true;
+      allow create: if isAuthenticated() 
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() 
+        && resource.data.userId == request.auth.uid;
+    }
+  }
+} 
