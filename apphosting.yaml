@@ -1,0 +1,16 @@
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyDZOdNgx1PsIosFlU6SC8hWQntLs0OVsQQ"
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "srf-connect.firebaseapp.com"
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "srf-connect"
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "srf-connect.firebasestorage.app"
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "33135850468"
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:33135850468:web:8ab41c13813beb820acdf1"
+  - variable: NEXT_PUBLIC_MAPBOX_TOKEN
+    value: "yG-DZ049RK9FZ" 
+    MONGODB_URI=mongodb+srv://lekhanaal12:v5SY3lGgYGQzBY7k@cluster0.iu3zsbb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
