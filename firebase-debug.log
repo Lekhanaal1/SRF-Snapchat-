@@ -1,0 +1,108 @@
+[debug] [2025-06-07T06:04:11.818Z] ----------------------------------------------------------------------
+[debug] [2025-06-07T06:04:11.819Z] Command:       /opt/homebrew/Cellar/node@20/20.19.2/bin/node /Users/lekhanaal/.nvm/versions/node/v18.20.8/bin/firebase deploy
+[debug] [2025-06-07T06:04:11.819Z] CLI Version:   13.35.1
+[debug] [2025-06-07T06:04:11.820Z] Platform:      darwin
+[debug] [2025-06-07T06:04:11.820Z] Node Version:  v20.19.2
+[debug] [2025-06-07T06:04:11.820Z] Time:          Sat Jun 07 2025 11:34:11 GMT+0530 (India Standard Time)
+[debug] [2025-06-07T06:04:11.820Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-06-07T06:04:11.888Z] Object "/hosting" in "firebase.json" has unknown property: {"additionalProperty":"regions"}
+[debug] [2025-06-07T06:04:11.888Z] Field "/hosting" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-06-07T06:04:11.889Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2025-06-07T06:04:11.890Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-07T06:04:11.890Z] > authorizing via signed-in user (lekhanaal@gmail.com)
+[debug] [2025-06-07T06:04:11.890Z] [iam] checking project srf-connect for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update","firebaserules.releases.create","firebaserules.releases.update","firebaserules.rulesets.create"]
+[debug] [2025-06-07T06:04:11.890Z] Checked if tokens are valid: true, expires at: 1749278957195
+[debug] [2025-06-07T06:04:11.890Z] Checked if tokens are valid: true, expires at: 1749278957195
+[debug] [2025-06-07T06:04:11.891Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/srf-connect:testIamPermissions [none]
+[debug] [2025-06-07T06:04:11.891Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/srf-connect:testIamPermissions x-goog-quota-user=projects/srf-connect
+[debug] [2025-06-07T06:04:11.891Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/srf-connect:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update","firebaserules.releases.create","firebaserules.releases.update","firebaserules.rulesets.create"]}
+[debug] [2025-06-07T06:04:13.489Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/srf-connect:testIamPermissions 200
+[debug] [2025-06-07T06:04:13.489Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/srf-connect:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update","firebaserules.releases.create","firebaserules.releases.update","firebaserules.rulesets.create"]}
+[debug] [2025-06-07T06:04:13.489Z] Checked if tokens are valid: true, expires at: 1749278957195
+[debug] [2025-06-07T06:04:13.489Z] Checked if tokens are valid: true, expires at: 1749278957195
+[debug] [2025-06-07T06:04:13.490Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/srf-connect/serviceAccounts/srf-connect@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-06-07T06:04:13.490Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/srf-connect/serviceAccounts/srf-connect@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-06-07T06:04:15.194Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/srf-connect/serviceAccounts/srf-connect@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2025-06-07T06:04:15.194Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/srf-connect/serviceAccounts/srf-connect@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-06-07T06:04:15.195Z] Checked if tokens are valid: true, expires at: 1749278957195
+[debug] [2025-06-07T06:04:15.195Z] Checked if tokens are valid: true, expires at: 1749278957195
+[debug] [2025-06-07T06:04:15.195Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/srf-connect [none]
+[debug] [2025-06-07T06:04:15.654Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/srf-connect 200
+[debug] [2025-06-07T06:04:15.655Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/srf-connect {"projectId":"srf-connect","projectNumber":"33135850468","displayName":"SRF-Connect","name":"projects/srf-connect","resources":{"hostingSite":"srf-connect"},"state":"ACTIVE","etag":"1_a8b2ed3e-09a9-4baf-803d-daa23b16d8e1"}
+[debug] [2025-06-07T06:04:16.168Z] Checked if tokens are valid: true, expires at: 1749278957195
+[debug] [2025-06-07T06:04:16.168Z] Checked if tokens are valid: true, expires at: 1749278957195
+[debug] [2025-06-07T06:04:16.168Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/srf-connect/sites pageToken=&pageSize=10
+[debug] [2025-06-07T06:04:17.419Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/srf-connect/sites 200
+[debug] [2025-06-07T06:04:17.420Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/srf-connect/sites {"sites":[{"name":"projects/srf-connect/sites/srf-connect","defaultUrl":"https://srf-connect.web.app","appId":"1:33135850468:web:8ab41c13813beb820acdf1","type":"DEFAULT_SITE"}]}
+[debug] [2025-06-07T06:04:17.421Z] Checked if tokens are valid: true, expires at: 1749278957195
+[debug] [2025-06-07T06:04:17.421Z] Checked if tokens are valid: true, expires at: 1749278957195
+[debug] [2025-06-07T06:04:17.421Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:33135850468:web:8ab41c13813beb820acdf1/config [none]
+[debug] [2025-06-07T06:04:18.508Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:33135850468:web:8ab41c13813beb820acdf1/config 200
+[debug] [2025-06-07T06:04:18.509Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:33135850468:web:8ab41c13813beb820acdf1/config {"projectId":"srf-connect","appId":"1:33135850468:web:8ab41c13813beb820acdf1","storageBucket":"srf-connect.firebasestorage.app","apiKey":"AIzaSyDZOdNgx1PsIosFlU6SC8hWQntLs0OVsQQ","authDomain":"srf-connect.firebaseapp.com","messagingSenderId":"33135850468","measurementId":"G-DZ049RK9FZ"}
+[info] 
+   Thank you for trying our early preview of Next.js support on Firebase Hosting.
+   During the preview, support is best-effort and breaking changes can be expected. Proceed with caution.
+   The integration is known to work with Next.js version 12 - 15.0. You may encounter errors.
+
+   Documentation: https://firebase.google.com/docs/hosting/frameworks/nextjs
+   File a bug: https://github.com/firebase/firebase-tools/issues/new?template=bug_report.md
+   Submit a feature request: https://github.com/firebase/firebase-tools/issues/new?template=feature_request.md
+
+   We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
+
+[debug] [2025-06-07T06:04:19.593Z] Checked if tokens are valid: true, expires at: 1749278957195
+[debug] [2025-06-07T06:04:19.593Z] Checked if tokens are valid: true, expires at: 1749278957195
+[debug] [2025-06-07T06:04:19.594Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/srf-connect/sites/srf-connect [none]
+[debug] [2025-06-07T06:04:20.229Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/srf-connect/sites/srf-connect 200
+[debug] [2025-06-07T06:04:20.229Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/srf-connect/sites/srf-connect {"name":"projects/srf-connect/sites/srf-connect","defaultUrl":"https://srf-connect.web.app","appId":"1:33135850468:web:8ab41c13813beb820acdf1","type":"DEFAULT_SITE"}
+[info]  ⚠ The "experimental.esmExternals" option has been modified. experimental.esmExternals is not recommended to be modified as it may disrupt module resolution. It should be removed from your next.config.js.
+
+[info]    ▲ Next.js 15.3.2
+
+[info]    - Environments: .env.local
+   - Experiments (use with caution):
+     · esmExternals
+
+
+[info]    Creating an optimized production build ...
+
+[info] [Error: Cannot apply unknown utility class: hover:bg-opacity-90]
+
+[info]  ✓ Compiled successfully in 3.0s
+
+[info]    Skipping linting
+
+[info]    Checking validity of types ...
+
+[info]    Collecting page data ...
+
+[info] Error: Please add your Mongo URI to .env.local
+    at 97801 (.next/server/app/api/devotees/nearby/route.js:1:926)
+    at t (.next/server/webpack-runtime.js:1:128)
+    at t (.next/server/app/api/devotees/nearby/route.js:1:2567)
+    at <unknown> (.next/server/app/api/devotees/nearby/route.js:1:2598)
+    at t.X (.next/server/webpack-runtime.js:1:1206)
+    at <unknown> (.next/server/app/api/devotees/nearby/route.js:1:2580)
+    at Object.<anonymous> (.next/server/app/api/devotees/nearby/route.js:1:2626)
+
+[info] Error: Please add your Mongo URI to .env.local
+    at 70308 (.next/server/app/api/devotees/route.js:1:913)
+    at t (.next/server/webpack-runtime.js:1:128)
+    at t (.next/server/app/api/devotees/route.js:1:3377)
+    at <unknown> (.next/server/app/api/devotees/route.js:1:3408)
+    at t.X (.next/server/webpack-runtime.js:1:1206)
+    at <unknown> (.next/server/app/api/devotees/route.js:1:3390)
+    at Object.<anonymous> (.next/server/app/api/devotees/route.js:1:3436)
+
+[info] 
+
+[info] > Build error occurred
+
+[info] [Error: Failed to collect page data for /api/devotees/nearby] {
+  type: 'Error'
+}
+
+[debug] [2025-06-07T06:04:29.694Z] Error: ENOENT: no such file or directory, open '/Users/lekhanaal/Desktop/SRF convocation global mapping/.next/export-marker.json'
+[error] 
+[error] Error: An unexpected error has occurred.

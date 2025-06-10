@@ -1,13 +1,16 @@
+'use client';
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
+import { AuthProvider } from '../contexts/AuthContext';
+import "../styles/globals.css";
 import Navigation from "./components/Navigation";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SRF Connect - Share Spiritual Moments",
-  description: "Connect with fellow devotees, share spiritual moments, and discover the global SRF family",
+  title: "SRF Connect",
+  description: "SRF Connect - Live Map for Devotees",
 };
 
 export default function RootLayout({
@@ -18,10 +21,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} min-h-screen bg-gray-50`}>
-        <Navigation />
-        <main>
-          {children}
-        </main>
+        <AuthProvider>
+          <Navigation />
+          <main>
+            {children}
+          </main>
+        </AuthProvider>
       </body>
     </html>
   );

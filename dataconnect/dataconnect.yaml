@@ -1,0 +1,12 @@
+specVersion: "v1beta"
+serviceId: "SRF convocation global mapping"
+location: "us-central1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "srfdb1"
+      cloudSql:
+        instanceId: "srf convocation global mapping-fdc"
+      # schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]

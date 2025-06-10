@@ -1,0 +1,13 @@
+{
+  "projects": {},
+  "targets": {
+    "srf-connect": {
+      "hosting": {
+        "srf-connect": [
+          "srf-connect"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

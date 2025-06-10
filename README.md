@@ -22,35 +22,34 @@ An interactive map application that helps SRF/YSS convocation participants conne
 ## Getting Started
 
 1. Clone the repository:
-```bash
-git clone <repository-url>
-cd srf-convocation-map
-```
+   ```bash
+   git clone <repository-url>
+   cd srf-convocation-map
+   ```
 
 2. Install dependencies:
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
 3. Create a `.env.local` file in the root directory with the following variables:
+   ```
+   # Firebase Configuration
+   NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key_here
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain_here
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id_here
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket_here
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id_here
+   NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id_here
 
-```env
-# Firebase Configuration
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key_here
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain_here
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id_here
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket_here
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id_here
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id_here
-
-# Mapbox Configuration
-NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_token_here
-```
+   # Mapbox Configuration
+   NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_token_here
+   ```
 
 4. Start the development server:
-```bash
-npm run dev
-```
+   ```bash
+   npm run dev
+   ```
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 

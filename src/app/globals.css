@@ -1,26 +1,66 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* SRF Official Colors */
+  --srf-blue: #1a365d;  /* SRF's primary blue */
+  --srf-gold: #c4a777;  /* SRF's accent gold */
+  --srf-light-blue: #e6f3ff;  /* Light blue for backgrounds */
+  --srf-dark-blue: #0f2942;  /* Dark blue for text */
+  
+  --background: var(--srf-light-blue);
+  --foreground: var(--srf-dark-blue);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: 'Garamond', 'Times New Roman', serif;  /* SRF's preferred serif font */
+  --font-mono: 'Courier New', monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Custom utility classes for SRF branding */
+.srf-button-primary {
+  @apply bg-[var(--srf-blue)] text-white hover:bg-[var(--srf-dark-blue)] transition-colors;
+}
+
+.srf-button-secondary {
+  @apply bg-[var(--srf-gold)] text-[var(--srf-dark-blue)] hover:bg-opacity-90 transition-colors;
+}
+
+.srf-text-primary {
+  @apply text-[var(--srf-dark-blue)];
+}
+
+.srf-text-accent {
+  @apply text-[var(--srf-gold)];
+}
+
+.srf-border {
+  @apply border-[var(--srf-blue)];
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--srf-light-blue);
+  color: var(--srf-dark-blue);
+  font-family: var(--font-sans);
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--srf-light-blue);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--srf-blue);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--srf-dark-blue);
 }

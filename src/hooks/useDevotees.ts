@@ -1,22 +1,7 @@
 import { useState, useEffect } from 'react'
-import { collection, addDoc, query, onSnapshot, orderBy, Timestamp } from 'firebase/firestore'
+import { collection, addDoc, query, onSnapshot, orderBy, Timestamp, updateDoc, doc, deleteDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-
-export interface Devotee {
-  id: string
-  name: string
-  city: string
-  country: string
-  lessonRange: string
-  profession?: string
-  favoriteQuote?: string
-  shareLocation: boolean
-  coordinates?: {
-    lat: number
-    lng: number
-  }
-  createdAt: Timestamp
-}
+import type { Devotee } from '@/types/devotee'
 
 export function useDevotees() {
   const [devotees, setDevotees] = useState<Devotee[]>([])
@@ -30,7 +15,9 @@ export function useDevotees() {
       (snapshot) => {
         const devoteeData = snapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate(),
+          updatedAt: doc.data().updatedAt?.toDate(),
         })) as Devotee[]
         setDevotees(devoteeData)
         setLoading(false)
@@ -45,11 +32,12 @@ export function useDevotees() {
     return () => unsubscribe()
   }, [])
 
-  const addDevotee = async (devoteeData: Omit<Devotee, 'id' | 'createdAt'>) => {
+  const addDevotee = async (devoteeData: Omit<Devotee, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const docRef = await addDoc(collection(db, 'devotees'), {
         ...devoteeData,
-        createdAt: Timestamp.now()
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       return docRef.id
     } catch (err) {
@@ -58,10 +46,34 @@ export function useDevotees() {
     }
   }
 
+  const updateDevotee = async (id: string, data: Partial<Devotee>) => {
+    try {
+      const devoteeRef = doc(db, 'devotees', id)
+      await updateDoc(devoteeRef, {
+        ...data,
+        updatedAt: new Date(),
+      })
+    } catch (err) {
+      console.error('Error updating devotee:', err)
+      throw err
+    }
+  }
+
+  const deleteDevotee = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'devotees', id))
+    } catch (err) {
+      console.error('Error deleting devotee:', err)
+      throw err
+    }
+  }
+
   return {
     devotees,
     loading,
     error,
-    addDevotee
+    addDevotee,
+    updateDevotee,
+    deleteDevotee,
   }
 } 

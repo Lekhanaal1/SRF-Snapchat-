@@ -1,9 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import ShareMoment from '../components/ShareMoment'
+import dynamic from 'next/dynamic'
 import MomentFeed from '../components/MomentFeed'
 import { PlusIcon } from '@heroicons/react/24/outline'
+
+const ShareMoment = dynamic(() => import('@/components/client/ShareMoment'), { 
+  ssr: false,
+  loading: () => (
+    <div className="max-w-lg mx-auto bg-white rounded-lg shadow-lg p-6">
+      <div className="animate-pulse">
+        <div className="h-64 bg-gray-200 rounded-lg mb-4"></div>
+        <div className="h-24 bg-gray-200 rounded-lg mb-4"></div>
+        <div className="h-12 bg-gray-200 rounded-lg"></div>
+      </div>
+    </div>
+  )
+})
 
 export default function MomentsPage() {
   const [isSharing, setIsSharing] = useState(false)

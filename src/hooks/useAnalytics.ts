@@ -1,5 +1,11 @@
-import { analytics } from '@/lib/firebase'
-import { logEvent, Analytics } from 'firebase/analytics'
+import { app } from '@/lib/firebase'
+import { getAnalytics, logEvent, Analytics } from 'firebase/analytics'
+
+let analytics: Analytics | null = null
+
+if (typeof window !== 'undefined') {
+  analytics = getAnalytics(app)
+}
 
 export function useAnalytics() {
   const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
@@ -13,18 +19,28 @@ export function useAnalytics() {
   }
 
   const trackMomentShare = (hasLocation: boolean, hasQuote: boolean) => {
-    trackEvent('share_moment', {
+    if (!analytics) return
+    
+    logEvent(analytics, 'share_moment', {
       has_location: hasLocation,
-      has_quote: hasQuote,
+      has_quote: hasQuote
     })
   }
 
   const trackMomentLike = (momentId: string) => {
-    trackEvent('like_moment', { moment_id: momentId })
+    if (!analytics) return
+    
+    logEvent(analytics, 'like_moment', {
+      moment_id: momentId
+    })
   }
 
   const trackMomentComment = (momentId: string) => {
-    trackEvent('comment_moment', { moment_id: momentId })
+    if (!analytics) return
+    
+    logEvent(analytics, 'comment_moment', {
+      moment_id: momentId
+    })
   }
 
   const trackMapInteraction = (action: 'add_location' | 'view_location' | 'search') => {
