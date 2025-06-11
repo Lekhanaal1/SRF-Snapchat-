@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, CollectionReference, Query, DocumentData } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import Map from '../components/Map';
 import MomentCard from '../components/MomentCard';
@@ -15,13 +15,13 @@ export default function Home() {
 
   useEffect(() => {
     const fetchMoments = async () => {
-      let q = collection(db, 'moments');
+      let qRef: CollectionReference<DocumentData> | Query<DocumentData> = collection(db, 'moments');
       
       if (activeFilters.length > 0) {
-        q = query(q, where('tags', 'array-contains-any', activeFilters));
+        qRef = query(qRef, where('tags', 'array-contains-any', activeFilters));
       }
 
-      const momentsSnapshot = await getDocs(q);
+      const momentsSnapshot = await getDocs(qRef);
       const ids = momentsSnapshot.docs.map(doc => doc.id);
       setMomentIds(ids);
     };
@@ -34,7 +34,7 @@ export default function Home() {
       <header className="fixed top-0 left-0 right-0 bg-blue-600 text-white p-4 shadow-md z-50">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <img src="/srf-logo.png" alt="SRF Logo" className="h-10" />
+            <img src="/srf-symbol.png" alt="SRF Symbol Logo" className="h-10" />
             <h1 className="text-2xl font-bold">SRF Connect</h1>
           </div>
           <nav className="flex items-center space-x-4">
