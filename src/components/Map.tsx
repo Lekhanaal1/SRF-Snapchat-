@@ -324,7 +324,7 @@ export default function Map() {
         // Zoom on devotee cluster click
         map.current!.on('click', 'devotee-clusters', (e) => {
           const features = map.current!.queryRenderedFeatures(e.point, { layers: ['devotee-clusters'] });
-          if (!features[0]) return;
+          if (!features[0] || !features[0].properties) return;
           const clusterId = features[0].properties.cluster_id;
           (map.current!.getSource('devotees-data') as mapboxgl.GeoJSONSource).getClusterExpansionZoom(clusterId, (err, zoom) => {
             if (err) return;

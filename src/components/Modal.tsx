@@ -50,10 +50,10 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
                   </button>
                 </div>
                 <div>
-                  <Dialog.Title as="h3" className="text-lg font-semibold leading-6 text-gray-900">
+                  <Dialog.Title as="h3" className="text-lg font-semibold leading-6 text-gray-900 mb-4">
                     {title}
                   </Dialog.Title>
-                  <div className="mt-4">{children}</div>
+                  <div className="mt-2">{children}</div>
                 </div>
               </Dialog.Panel>
             </Transition.Child>
