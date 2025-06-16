@@ -15,26 +15,89 @@ service cloud.firestore {
 
     function isValidParticipant() {
       let data = request.resource.data;
-      return data.keys().hasAll(['name', 'email', 'center', 'status', 'createdAt', 'updatedAt']) &&
-        data.name is string && data.name.size() > 0 &&
-        data.email is string && data.email.matches('^[^@]+@[^@]+\\.[^@]+$') &&
-        data.center is string && data.center.size() > 0 &&
-        data.status in ['pending', 'approved', 'rejected', 'registered'] &&
-        data.createdAt is timestamp &&
-        data.updatedAt is timestamp;
+      let requiredFields = ['name', 'email', 'center', 'status', 'createdAt', 'updatedAt'];
+      let stringFields = ['name', 'email', 'center'];
+      let timestampFields = ['createdAt', 'updatedAt'];
+      
+      // Check required fields
+      if (!data.keys().hasAll(requiredFields)) {
+        return false;
+      }
+      
+      // Validate string fields
+      for (let field in stringFields) {
+        if (!(data[field] is string) || data[field].size() == 0) {
+          return false;
+        }
+      }
+      
+      // Validate email format
+      if (!data.email.matches('^[^@]+@[^@]+\\.[^@]+$')) {
+        return false;
+      }
+      
+      // Validate status
+      if (!(data.status in ['pending', 'approved', 'rejected', 'registered'])) {
+        return false;
+      }
+      
+      // Validate timestamps
+      for (let field in timestampFields) {
+        if (!(data[field] is timestamp)) {
+          return false;
+        }
+      }
+      
+      // Validate location if present
+      if ('location' in data) {
+        if (!(data.location is map) ||
+            !('coordinates' in data.location) ||
+            !(data.location.coordinates is list) ||
+            data.location.coordinates.size() != 2) {
+          return false;
+        }
+      }
+      
+      // Validate profile picture if present
+      if ('profilePicture' in data) {
+        if (!(data.profilePicture is string) ||
+            !data.profilePicture.matches('^https://firebasestorage\\.googleapis\\.com/.*$')) {
+          return false;
+        }
+      }
+      
+      return true;
     }
 
     function isValidRegistration() {
       let data = request.resource.data;
-      return data.keys().hasAll(['name', 'email', 'center', 'location', 'status', 'createdAt', 'updatedAt']) &&
-        data.name is string && data.name.size() > 0 &&
-        data.email is string && data.email.matches('^[^@]+@[^@]+\\.[^@]+$') &&
-        data.center is string && data.center.size() > 0 &&
-        data.location is map &&
-        data.location.coordinates is list && data.location.coordinates.size() == 2 &&
-        data.status in ['registered', 'approved'] &&
-        data.createdAt is timestamp &&
-        data.updatedAt is timestamp;
+      let requiredFields = ['name', 'email', 'center', 'location', 'status', 'createdAt', 'updatedAt'];
+      
+      if (!isValidParticipant()) {
+        return false;
+      }
+      
+      // Additional registration-specific validations
+      if (!data.keys().hasAll(requiredFields)) {
+        return false;
+      }
+      
+      if (!(data.location is map) ||
+          !('coordinates' in data.location) ||
+          !(data.location.coordinates is list) ||
+          data.location.coordinates.size() != 2) {
+        return false;
+      }
+      
+      if (!(data.status in ['registered', 'approved'])) {
+        return false;
+      }
+      
+      return true;
+    }
+
+    function isWithinRateLimit() {
+      return request.time > resource.data.lastUpdate + duration.value(1, 'h');
     }
 
     // Participants collection
@@ -46,7 +109,9 @@ service cloud.firestore {
       allow create: if isAdmin() && isValidParticipant();
       
       // Only admins can update participant data
-      allow update: if isAdmin() && isValidParticipant();
+      allow update: if isAdmin() && 
+        isValidParticipant() && 
+        isWithinRateLimit();
       
       // Only admins can delete participants
       allow delete: if isAdmin();
@@ -58,6 +123,12 @@ service cloud.firestore {
       allow read: if isAuthenticated() && request.auth.uid == userId;
       
       // Only admins can write to admin users
+      allow write: if isAdmin();
+    }
+
+    // Center statistics collection
+    match /centerStats/{centerId} {
+      allow read: if true;
       allow write: if isAdmin();
     }
 

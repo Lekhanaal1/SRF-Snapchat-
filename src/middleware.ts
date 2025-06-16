@@ -1,6 +1,15 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { verifyAuth } from './lib/auth';
+import { Ratelimit } from '@upstash/ratelimit';
+import { redis } from './lib/redis';
+
+// Create a new ratelimiter that allows 10 requests per 10 seconds
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, '10 s'),
+  analytics: true,
+  prefix: '@upstash/ratelimit',
+});
 
 export async function middleware(request: NextRequest) {
   // Only protect admin routes
@@ -42,9 +51,53 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/map', request.url));
   }
 
-  return NextResponse.next();
+  // Get the IP address from the request headers
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  const ip = forwardedFor ? forwardedFor.split(',')[0] : '127.0.0.1';
+  
+  // Rate limit the request
+  const { success, limit, reset, remaining } = await ratelimit.limit(ip);
+  
+  // Add rate limit headers to the response
+  const response = NextResponse.next();
+  response.headers.set('X-RateLimit-Limit', limit.toString());
+  response.headers.set('X-RateLimit-Remaining', remaining.toString());
+  response.headers.set('X-RateLimit-Reset', reset.toString());
+  
+  // Add security headers
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleapis.com https://*.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.gstatic.com;"
+  );
+  
+  // If rate limit is exceeded, return a 429 response
+  if (!success) {
+    return new NextResponse('Too Many Requests', {
+      status: 429,
+      headers: {
+        'Retry-After': reset.toString(),
+        ...Object.fromEntries(response.headers),
+      },
+    });
+  }
+  
+  return response;
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)', '/admin/:path*'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 }; 

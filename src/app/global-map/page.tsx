@@ -2,12 +2,23 @@
 
 import { useEffect, useState } from 'react';
 import GlobalMap from '@/components/GlobalMap';
+import MobileMapView from '@/components/MobileMapView';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export default function GlobalMapPage() {
   const [totalDevotees, setTotalDevotees] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const fetchTotalDevotees = async () => {
@@ -25,6 +36,10 @@ export default function GlobalMapPage() {
 
     fetchTotalDevotees();
   }, []);
+
+  if (isMobile) {
+    return <MobileMapView />;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
