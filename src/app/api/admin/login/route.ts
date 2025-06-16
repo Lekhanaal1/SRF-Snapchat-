@@ -1,49 +1,48 @@
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
-import { cookies } from 'next/headers';
+import { auth } from '@/lib/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { generateToken } from '@/lib/auth';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-
-// This is a mock admin user - in production, you should use a database
-const ADMIN_USER = {
-  email: 'admin@example.com',
-  password: 'admin123', // In production, use hashed passwords
-};
+// Admin email should be configured in Firebase Authentication
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { email, password } = body;
 
-    // Validate credentials
-    if (email !== ADMIN_USER.email || password !== ADMIN_USER.password) {
+    // Only allow admin email to login
+    if (email !== ADMIN_EMAIL) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
       );
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { email: ADMIN_USER.email, role: 'admin' },
-      JWT_SECRET,
-      { expiresIn: '1d' }
-    );
+    // Sign in with Firebase
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
+    // Generate JWT token
+    const token = generateToken({ email: user.email!, role: 'admin' });
+
+    // Create response with token
+    const response = NextResponse.json({ success: true });
+    
     // Set HTTP-only cookie
-    cookies().set('adminToken', token, {
+    response.cookies.set('adminToken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 86400 // 1 day
     });
 
-    return NextResponse.json({ success: true });
+    return response;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: 'Invalid credentials' },
+      { status: 401 }
     );
   }
 } 

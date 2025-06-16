@@ -1,7 +1,31 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { verifyAuth } from './lib/auth';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  // Only protect admin routes
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    // Skip middleware for login page
+    if (request.nextUrl.pathname === '/admin/login') {
+      return NextResponse.next();
+    }
+
+    const token = request.cookies.get('adminToken')?.value;
+
+    if (!token) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+
+    try {
+      const decoded = await verifyAuth(token);
+      if (!decoded || decoded.role !== 'admin') {
+        return NextResponse.redirect(new URL('/admin/login', request.url));
+      }
+    } catch (error) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+  }
+
   const { pathname } = request.nextUrl;
   const isAuthenticated = request.cookies.has('auth_token'); // We'll set this when user signs in
 
@@ -22,5 +46,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)', '/admin/:path*'],
 }; 
