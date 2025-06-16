@@ -16,6 +16,7 @@ export default function ConvocationTour() {
   const [currentSpotIndex, setCurrentSpotIndex] = useState(0);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [showContent, setShowContent] = useState(true);
+  const [nextImageUrl, setNextImageUrl] = useState<string | null>(null);
 
   const currentSpot = convocationTourSpots[currentSpotIndex];
 
@@ -93,6 +94,12 @@ export default function ConvocationTour() {
     });
   }, [currentSpotIndex, mapLoaded]);
 
+  // Preload the next image when the current spot changes
+  useEffect(() => {
+    const nextIndex = (currentSpotIndex + 1) % convocationTourSpots.length;
+    setNextImageUrl(convocationTourSpots[nextIndex].imageUrl);
+  }, [currentSpotIndex]);
+
   const handlePrevious = () => {
     setCurrentSpotIndex((prevIndex) => (prevIndex === 0 ? convocationTourSpots.length - 1 : prevIndex - 1));
   };
@@ -103,8 +110,23 @@ export default function ConvocationTour() {
 
   return (
     <div className="flex flex-col h-screen">
+      {/* Preload next image */}
+      {nextImageUrl && (
+        <div style={{ display: 'none' }}>
+          <Image
+            src={nextImageUrl}
+            alt="Preload next tour image"
+            width={1}
+            height={1}
+            priority
+          />
+        </div>
+      )}
+
+      {/* Map Section */}
       <div ref={mapContainer} className="flex-grow relative" />
 
+      {/* Tour Controls and Content */}
       <div className="bg-white shadow-lg p-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <button
@@ -122,6 +144,7 @@ export default function ConvocationTour() {
           </button>
         </div>
 
+        {/* Toggle to hide/show content */}
         <button
           onClick={() => setShowContent(!showContent)}
           className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
@@ -129,6 +152,7 @@ export default function ConvocationTour() {
           {showContent ? 'Hide Content' : 'Show Content'}
         </button>
 
+        {/* Current Spot Content */}
         {showContent && (
           <div className="flex-1 flex flex-col md:flex-row items-center gap-4">
             <div className="relative w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden">

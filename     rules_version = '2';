@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Generic rule: allow only authenticated users
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Devotees collection – each user manages only their own profile
+    match /devotees/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+    }
+
+    // Moments collection – users can only write their own moments
+    match /moments/{momentId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.resource.data.uid == request.auth.uid;
+    }
+
+    // Convocation attendees – user-specific access
+    match /convocationAttendees/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+    }
+
+    // Convocation events – public readable but only admins can write (customize as needed)
+    match /convocationEvents/{eventId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.token.admin == true;
+    }
+  }
+}

@@ -387,44 +387,79 @@ export default function Map() {
   }
 
   return (
-    <div className="h-full w-full relative">
+    <div className="relative w-full h-[calc(100vh-4rem)]">
       <div ref={mapContainer} className="absolute inset-0" />
       
+      {/* Controls Panel - Responsive Layout */}
+      <div className="absolute top-4 left-4 right-4 sm:right-auto sm:w-64 bg-white rounded-lg shadow-lg p-4 z-10">
+        <div className="space-y-4">
+          {/* Country Filter */}
+          <div>
+            <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+              Country
+            </label>
+            <select
+              id="country"
+              value={selectedCountry}
+              onChange={(e) => setSelectedCountry(e.target.value)}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            >
+              <option value="All">All Countries</option>
+              {countries.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Type Filter */}
+          <div>
+            <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
+              Type
+            </label>
+            <select
+              id="type"
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            >
+              <option value="All">All Types</option>
+              {types.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Heatmap Toggle */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="heatmap"
+              checked={showHeatmap}
+              onChange={(e) => setShowHeatmap(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="heatmap" className="ml-2 block text-sm text-gray-700">
+              Show Heatmap
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Map Coordinates - Mobile Friendly */}
+      <div className="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 bg-white rounded-lg shadow-lg p-2 text-xs text-gray-500 z-10">
+        Longitude: {lng.toFixed(4)} | Latitude: {lat.toFixed(4)} | Zoom: {zoom.toFixed(2)}
+      </div>
+
       {/* Loading indicator */}
       {loading && (
         <div className="absolute top-4 left-4 bg-white px-4 py-2 rounded-md shadow-md">
           <p className="text-sm text-blue-600">Loading devotees...</p>
         </div>
       )}
-
-      {/* Map controls info */}
-      <div className="absolute bottom-4 left-4 bg-white px-4 py-2 rounded-md shadow-md">
-        <p className="text-sm text-gray-600">
-          Longitude: {lng} | Latitude: {lat} | Zoom: {zoom}
-        </p>
-      </div>
-
-      {/* Filter UI */}
-      <div className="absolute top-4 right-4 bg-white p-4 rounded shadow-md z-10">
-        <label className="block mb-2 font-semibold">Filter Centers</label>
-        <select value={selectedCountry} onChange={e => setSelectedCountry(e.target.value)} className="mb-2 block w-full border rounded p-1">
-          <option value="All">All Countries</option>
-          {countries.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select value={selectedType} onChange={e => setSelectedType(e.target.value)} className="block w-full border rounded p-1">
-          <option value="All">All Types</option>
-          {types.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-        <label className="mt-4 flex items-center">
-          <input
-            type="checkbox"
-            checked={showHeatmap}
-            onChange={e => setShowHeatmap(e.target.checked)}
-            className="form-checkbox h-4 w-4 text-blue-600"
-          />
-          <span className="ml-2 text-sm text-gray-700">Show Devotee Heatmap</span>
-        </label>
-      </div>
 
       {/* Add custom styles for markers */}
       <style jsx global>{`

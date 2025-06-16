@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import { QrCodeIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import { centers } from '@/data/centers';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -28,6 +30,21 @@ interface QRData {
   timestamp: string;
 }
 
+// Define validation schema using yup
+const registrationSchema = yup.object().shape({
+  name: yup.string().required('Full Name is required').min(2, 'Name must be at least 2 characters'),
+  lessonNumber: yup.number()
+    .required('Lesson Number is required')
+    .positive('Lesson Number must be positive')
+    .integer('Lesson Number must be an integer')
+    .min(1, 'Lesson Number must be at least 1'),
+  homeCenter: yup.string().required('Home Center is required'),
+  isKriyaban: yup.boolean(),
+  devoteeSince: yup.string().required('Devotee Since date is required'),
+  // profileImage is handled separately if needed for client-side validation,
+  // but primarily validated before upload if it's a file.
+});
+
 export default function SignIn() {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showRegistration, setShowRegistration] = useState(false);
@@ -36,7 +53,9 @@ export default function SignIn() {
   const [qrData, setQrData] = useState<QRData | null>(null);
   const router = useRouter();
   const { user } = useAuth();
-  const { register, handleSubmit, formState: { errors } } = useForm<RegistrationFormData>();
+  const { register, handleSubmit, formState: { errors } } = useForm<RegistrationFormData>({
+    resolver: yupResolver(registrationSchema),
+  });
 
   // Get unique center names for dropdown
   const centerNames = Array.from(new Set(centers.map(c => c.name))).sort();
@@ -193,7 +212,7 @@ export default function SignIn() {
                   Full Name
                 </label>
                 <input
-                  {...register('name', { required: 'Name is required' })}
+                  {...register('name')}
                   type="text"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -208,10 +227,7 @@ export default function SignIn() {
                   Lesson Number
                 </label>
                 <input
-                  {...register('lessonNumber', { 
-                    required: 'Lesson number is required',
-                    min: { value: 1, message: 'Lesson number must be at least 1' }
-                  })}
+                  {...register('lessonNumber')}
                   type="number"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -226,7 +242,7 @@ export default function SignIn() {
                   Home Center
                 </label>
                 <select
-                  {...register('homeCenter', { required: 'Home center is required' })}
+                  {...register('homeCenter')}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Select a center</option>
@@ -249,18 +265,19 @@ export default function SignIn() {
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <label htmlFor="isKriyaban" className="ml-2 block text-sm text-gray-700">
-                  I am a Kriyaban
+                  Are you a Kriyaban?
                 </label>
               </div>
 
               {/* Devotee Since */}
               <div>
                 <label htmlFor="devoteeSince" className="block text-sm font-medium text-gray-700">
-                  Devotee Since
+                  Devotee Since (Year)
                 </label>
                 <input
-                  {...register('devoteeSince', { required: 'Please indicate when you became a devotee' })}
-                  type="date"
+                  {...register('devoteeSince')}
+                  type="text"
+                  placeholder="e.g., 2005 or 2023-01-15"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 />
                 {errors.devoteeSince && (
@@ -268,17 +285,10 @@ export default function SignIn() {
                 )}
               </div>
 
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setShowRegistration(false)}
-                  className="text-sm text-gray-600 hover:text-gray-900"
-                >
-                  Back
-                </button>
+              <div>
                 <button
                   type="submit"
-                  className="flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   Complete Registration
                 </button>

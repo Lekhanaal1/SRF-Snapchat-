@@ -1,69 +1,88 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { collection, getDocs, query, where, CollectionReference, Query, DocumentData } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import Map from '../components/Map';
-import MomentCard from '../components/MomentCard';
-import UploadMoment from '../components/UploadMoment';
-import PrayerBeacon from '../components/PrayerBeacon';
-import FilterBar from '../components/FilterBar';
+import Link from 'next/link';
+import Image from 'next/image';
+import CenterListSection from '@/components/CenterListSection';
 
-export default function Home() {
-  const [momentIds, setMomentIds] = useState<string[]>([]);
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
-
-  useEffect(() => {
-    const fetchMoments = async () => {
-      let qRef: CollectionReference<DocumentData> | Query<DocumentData> = collection(db, 'moments');
-      
-      if (activeFilters.length > 0) {
-        qRef = query(qRef, where('tags', 'array-contains-any', activeFilters));
-      }
-
-      const momentsSnapshot = await getDocs(qRef);
-      const ids = momentsSnapshot.docs.map(doc => doc.id);
-      setMomentIds(ids);
-    };
-
-    fetchMoments();
-  }, [activeFilters]);
-
+export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="fixed top-0 left-0 right-0 bg-blue-600 text-white p-4 shadow-md z-50">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <img src="/srf-symbol.png" alt="SRF Symbol Logo" className="h-10" />
-            <h1 className="text-2xl font-bold">SRF Connect</h1>
-          </div>
-          <nav className="flex items-center space-x-4">
-            <button className="bg-white text-blue-600 px-4 py-2 rounded">
-              Sign In
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <section className="relative h-screen bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center text-center overflow-hidden">
+        {/* Optional: Background globe/animation */}
+        <div className="absolute inset-0 z-0 opacity-20">
+          {/* You can add a subtle globe animation or background image here */}
+        </div>
+        <div className="relative z-10 p-6 max-w-4xl mx-auto">
+          <h1 className="text-5xl md:text-6xl font-extrabold mb-4 leading-tight">
+            SRF Global Devotee Map
+          </h1>
+          <p className="text-xl md:text-2xl mb-8 opacity-90">
+            Connect with Fellow Devotees Worldwide
+          </p>
+          <Link href="/map" legacyBehavior>
+            <a className="inline-block bg-white text-blue-800 hover:bg-gray-100 px-8 py-4 rounded-full text-lg font-semibold shadow-lg transition duration-300">
+              Explore Map
+            </a>
+          </Link>
+        </div>
+      </section>
+
+      {/* About / Philosophy Section */}
+      <section className="py-16 bg-white text-gray-800">
+        <div className="container mx-auto px-6 text-center max-w-3xl">
+          <h2 className="text-4xl font-bold mb-8">About SRF / YSS</h2>
+          <p className="text-lg mb-6 leading-relaxed">
+            Self-Realization Fellowship (SRF) and Yogoda Satsanga Society of India (YSS),
+            founded by Paramahansa Yogananda, teach scientific methods of meditation
+            that lead to direct personal experience of God.
+          </p>
+          <blockquote className="italic text-xl text-gray-600 mt-8 border-l-4 border-blue-500 pl-4">
+            "Live in the world, but not of the world."
+            <footer className="mt-2 text-base font-semibold">— Paramahansa Yogananda, Autobiography of a Yogi</footer>
+          </blockquote>
+        </div>
+      </section>
+
+      {/* Center List Section */}
+      <CenterListSection />
+
+      {/* Moments / Highlights Section Link */}
+      <section className="py-16 bg-gray-100 text-center">
+        <div className="container mx-auto px-6">
+          <h2 className="text-4xl font-bold mb-6 text-gray-800">Spiritual Moments</h2>
+          <p className="text-lg text-gray-700 mb-8">
+            Share and view inspiring spiritual moments from devotees around the globe.
+          </p>
+          <Link href="/moments" legacyBehavior>
+            <a className="inline-block bg-blue-600 text-white hover:bg-blue-700 px-8 py-4 rounded-full text-lg font-semibold shadow-lg transition duration-300">
+              View Moments
+            </a>
+          </Link>
+        </div>
+      </section>
+
+      {/* Contact / Join Section */}
+      <section className="py-16 bg-white text-gray-800 text-center">
+        <div className="container mx-auto px-6 max-w-3xl">
+          <h2 className="text-4xl font-bold mb-6">Join Our Community</h2>
+          <p className="text-lg mb-8 leading-relaxed">
+            Become a part of the SRF / YSS global family. Add your location to the map
+            and connect with fellow devotees, or sign up for our newsletter.
+          </p>
+          <div className="flex flex-col md:flex-row justify-center items-center gap-4">
+            <Link href="/signin" legacyBehavior>
+              <a className="inline-block bg-blue-600 text-white hover:bg-blue-700 px-8 py-4 rounded-full text-lg font-semibold shadow-lg transition duration-300">
+                Add My Location / Sign In
+              </a>
+            </Link>
+            {/* Future: Newsletter/Volunteer signup */}
+            <button className="inline-block bg-gray-200 text-gray-800 hover:bg-gray-300 px-8 py-4 rounded-full text-lg font-semibold shadow-lg transition duration-300">
+              Subscribe to Newsletter
             </button>
-          </nav>
-        </div>
-      </header>
-
-      <main className="container mx-auto pt-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            <Map />
-            <div className="mt-4 space-y-4">
-              <h2 className="text-xl font-bold">Recent Moments</h2>
-              {momentIds.map(id => (
-                <MomentCard key={id} momentId={id} />
-              ))}
-            </div>
-          </div>
-          <div className="lg:col-span-1">
-            <FilterBar onFilterChange={setActiveFilters} />
           </div>
         </div>
-      </main>
-
-      <UploadMoment />
-      <PrayerBeacon />
+      </section>
     </div>
   );
 }

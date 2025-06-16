@@ -1,0 +1,16 @@
+{
+  "name": "SRF Connect",
+  "short_name": "SRF Connect",
+  "description": "SRF Connect - Live Map for Devotees",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/srf-symbol.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+} 

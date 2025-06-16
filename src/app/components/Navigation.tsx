@@ -8,10 +8,19 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
 const navigation = [
-  { name: 'Map', href: '/map' },
-  { name: 'Moments', href: '/moments' },
-  { name: 'Prayer Beacons', href: '/prayer-beacons' },
+  { name: 'Map', href: '/map', current: false },
+  { name: 'Moments', href: '/moments', current: false },
+  { name: 'Prayer Beacons', href: '/prayer-beacons', current: false },
 ]
+
+const authenticatedNavigation = [
+  { name: 'Convocation Dashboard', href: '/convocation', current: false },
+  { name: 'Convocation Tour', href: '/tour', current: false },
+]
+
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(' ')
+}
 
 export default function Navigation() {
   const { user, signOut } = useAuth()
@@ -38,6 +47,15 @@ export default function Navigation() {
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                   {navigation.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                  {user && authenticatedNavigation.map((item) => (
                     <a
                       key={item.name}
                       href={item.href}
@@ -85,9 +103,10 @@ export default function Navigation() {
                           {({ active }) => (
                             <a
                               href="/profile"
-                              className={`${
-                                active ? 'bg-gray-100' : ''
-                              } block px-4 py-2 text-sm text-gray-700`}
+                              className={classNames(
+                                active ? 'bg-gray-100' : '',
+                                'block px-4 py-2 text-sm text-gray-700'
+                              )}
                             >
                               Your Profile
                             </a>
@@ -97,9 +116,10 @@ export default function Navigation() {
                           {({ active }) => (
                             <button
                               onClick={handleSignOut}
-                              className={`${
-                                active ? 'bg-gray-100' : ''
-                              } block w-full text-left px-4 py-2 text-sm text-gray-700`}
+                              className={classNames(
+                                active ? 'bg-gray-100' : '',
+                                'block w-full text-left px-4 py-2 text-sm text-gray-700'
+                              )}
                             >
                               Sign out
                             </button>
@@ -137,7 +157,17 @@ export default function Navigation() {
                   key={item.name}
                   as="a"
                   href={item.href}
-                  className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
+                  className="block border-l-4 border-transparent py-3 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-200"
+                >
+                  {item.name}
+                </Disclosure.Button>
+              ))}
+              {user && authenticatedNavigation.map((item) => (
+                <Disclosure.Button
+                  key={item.name}
+                  as="a"
+                  href={item.href}
+                  className="block border-l-4 border-transparent py-3 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-200"
                 >
                   {item.name}
                 </Disclosure.Button>
@@ -148,17 +178,17 @@ export default function Navigation() {
                 <>
                   <div className="flex items-center px-4">
                     <div className="flex-shrink-0">
-                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                      <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
                         {user.photoURL ? (
                           <Image
                             src={user.photoURL}
                             alt="Profile"
-                            width={40}
-                            height={40}
+                            width={48}
+                            height={48}
                             className="rounded-full"
                           />
                         ) : (
-                          <span className="text-gray-500">
+                          <span className="text-gray-500 text-lg">
                             {user.displayName?.[0] || 'U'}
                           </span>
                         )}
@@ -191,14 +221,13 @@ export default function Navigation() {
                   </div>
                 </>
               ) : (
-                <div className="mt-3 space-y-1">
-                  <Disclosure.Button
-                    as="a"
+                <div className="px-4 py-3">
+                  <a
                     href="/signin"
-                    className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                    className="block w-full text-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
                     Sign in
-                  </Disclosure.Button>
+                  </a>
                 </div>
               )}
             </div>
