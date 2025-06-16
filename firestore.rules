@@ -6,43 +6,64 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
-    
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/adminUsers/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // Moments collection rules
-    match /moments/{momentId} {
-      allow read: if true; // Anyone can read moments
-      allow create: if isAuthenticated() 
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.createdAt == request.time;
-      allow update: if isAuthenticated() 
-        && (resource.data.userId == request.auth.uid 
-            || request.resource.data.diff(resource.data).affectedKeys()
-                .hasOnly(['likes', 'comments']));
-      allow delete: if isAuthenticated() 
-        && resource.data.userId == request.auth.uid;
+    function isValidParticipant() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['name', 'email', 'center', 'status', 'createdAt', 'updatedAt']) &&
+        data.name is string && data.name.size() > 0 &&
+        data.email is string && data.email.matches('^[^@]+@[^@]+\\.[^@]+$') &&
+        data.center is string && data.center.size() > 0 &&
+        data.status in ['pending', 'approved', 'rejected', 'registered'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
     }
 
-    // Devotees collection rules
-    match /devotees/{devoteeId} {
-      allow read: if true; // Anyone can read devotee profiles
-      allow create: if isAuthenticated() 
-        && request.resource.data.userId == request.auth.uid;
-      allow update: if isAuthenticated() 
-        && resource.data.userId == request.auth.uid;
-      allow delete: if isAuthenticated() 
-        && resource.data.userId == request.auth.uid;
+    function isValidRegistration() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['name', 'email', 'center', 'location', 'status', 'createdAt', 'updatedAt']) &&
+        data.name is string && data.name.size() > 0 &&
+        data.email is string && data.email.matches('^[^@]+@[^@]+\\.[^@]+$') &&
+        data.center is string && data.center.size() > 0 &&
+        data.location is map &&
+        data.location.coordinates is list && data.location.coordinates.size() == 2 &&
+        data.status in ['registered', 'approved'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
     }
 
-    // Comments subcollection rules (if we decide to use subcollections)
-    match /moments/{momentId}/comments/{commentId} {
+    // Participants collection
+    match /participants/{participantId} {
+      // Anyone can read participant data for the global map
       allow read: if true;
-      allow create: if isAuthenticated() 
-        && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAuthenticated() 
-        && resource.data.userId == request.auth.uid;
+      
+      // Only admins can create new participants
+      allow create: if isAdmin() && isValidParticipant();
+      
+      // Only admins can update participant data
+      allow update: if isAdmin() && isValidParticipant();
+      
+      // Only admins can delete participants
+      allow delete: if isAdmin();
+    }
+
+    // Admin users collection
+    match /adminUsers/{userId} {
+      // Users can read their own admin data
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Only admins can write to admin users
+      allow write: if isAdmin();
+    }
+
+    // Deny access to all other collections
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 } 

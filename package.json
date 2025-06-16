@@ -23,6 +23,7 @@
     "mongodb": "^6.3.0",
     "next": "^15.3.3",
     "qrcode": "^1.5.4",
+    "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.57.0",
