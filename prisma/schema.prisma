@@ -5,6 +5,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // For direct connections
+  relationMode = "prisma"
 }
 
 model Participant {
@@ -15,4 +17,8 @@ model Participant {
   status    String   @default("pending") // pending, approved, rejected
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([email])
 } 
