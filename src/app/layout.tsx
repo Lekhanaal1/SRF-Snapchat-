@@ -3,12 +3,13 @@ import { Inter } from "next/font/google";
 import { AuthProvider } from '../contexts/AuthContext';
 import "../styles/globals.css";
 import Navigation from "./components/Navigation";
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SRF Connect",
-  description: "SRF Connect - Live Map for Devotees",
+  title: "YAS Connect",
+  description: "Connect with fellow YAS participants globally",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0",
   themeColor: "#ffffff",
   manifest: "/manifest.json",
@@ -38,6 +39,7 @@ export default function RootLayout({
           <main className="relative">
             {children}
           </main>
+          <Toaster position="top-center" />
         </AuthProvider>
       </body>
     </html>

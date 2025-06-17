@@ -16,9 +16,9 @@ interface RegistrationFormData {
   name: string;
   lessonNumber: number;
   homeCenter: string;
-  isKriyaban: boolean;
+  isKriyaban?: boolean;
   devoteeSince: string;
-  profileImage?: File;
+  // profileImage?: File;
 }
 
 interface QRData {
@@ -31,7 +31,7 @@ interface QRData {
 }
 
 // Define validation schema using yup
-const registrationSchema = yup.object().shape({
+const registrationSchema = yup.object<RegistrationFormData>().shape({
   name: yup.string().required('Full Name is required').min(2, 'Name must be at least 2 characters'),
   lessonNumber: yup.number()
     .required('Lesson Number is required')
@@ -138,7 +138,7 @@ export default function SignIn() {
           alt="SRF Symbol"
         />
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Welcome to SRF Connect
+          Welcome to YAS Connect
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           {qrData ? `Join ${qrData.eventName}` : 'Join the global SRF community'}

@@ -30,6 +30,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.57.0",
+    "react-hot-toast": "^2.5.2",
     "yup": "^1.6.1"
   },
   "devDependencies": {

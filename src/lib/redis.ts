@@ -18,4 +18,8 @@ export const redis = new Redis({
   url: redisUrl,
   token: redisToken,
   automaticDeserialization: true,
+  retry: {
+    retries: 3,
+    backoff: (retryCount) => Math.min(1000 * Math.pow(2, retryCount), 10000),
+  },
 }); 

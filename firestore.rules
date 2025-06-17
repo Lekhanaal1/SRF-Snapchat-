@@ -15,89 +15,15 @@ service cloud.firestore {
 
     function isValidParticipant() {
       let data = request.resource.data;
-      let requiredFields = ['name', 'email', 'center', 'status', 'createdAt', 'updatedAt'];
-      let stringFields = ['name', 'email', 'center'];
-      let timestampFields = ['createdAt', 'updatedAt'];
-      
-      // Check required fields
-      if (!data.keys().hasAll(requiredFields)) {
-        return false;
-      }
-      
-      // Validate string fields
-      for (let field in stringFields) {
-        if (!(data[field] is string) || data[field].size() == 0) {
-          return false;
-        }
-      }
-      
-      // Validate email format
-      if (!data.email.matches('^[^@]+@[^@]+\\.[^@]+$')) {
-        return false;
-      }
-      
-      // Validate status
-      if (!(data.status in ['pending', 'approved', 'rejected', 'registered'])) {
-        return false;
-      }
-      
-      // Validate timestamps
-      for (let field in timestampFields) {
-        if (!(data[field] is timestamp)) {
-          return false;
-        }
-      }
-      
-      // Validate location if present
-      if ('location' in data) {
-        if (!(data.location is map) ||
-            !('coordinates' in data.location) ||
-            !(data.location.coordinates is list) ||
-            data.location.coordinates.size() != 2) {
-          return false;
-        }
-      }
-      
-      // Validate profile picture if present
-      if ('profilePicture' in data) {
-        if (!(data.profilePicture is string) ||
-            !data.profilePicture.matches('^https://firebasestorage\\.googleapis\\.com/.*$')) {
-          return false;
-        }
-      }
-      
-      return true;
-    }
-
-    function isValidRegistration() {
-      let data = request.resource.data;
-      let requiredFields = ['name', 'email', 'center', 'location', 'status', 'createdAt', 'updatedAt'];
-      
-      if (!isValidParticipant()) {
-        return false;
-      }
-      
-      // Additional registration-specific validations
-      if (!data.keys().hasAll(requiredFields)) {
-        return false;
-      }
-      
-      if (!(data.location is map) ||
-          !('coordinates' in data.location) ||
-          !(data.location.coordinates is list) ||
-          data.location.coordinates.size() != 2) {
-        return false;
-      }
-      
-      if (!(data.status in ['registered', 'approved'])) {
-        return false;
-      }
-      
-      return true;
-    }
-
-    function isWithinRateLimit() {
-      return request.time > resource.data.lastUpdate + duration.value(1, 'h');
+      return data.keys().hasAll(['name', 'email', 'center', 'status', 'createdAt', 'updatedAt']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.email is string && data.email.matches('^[^@]+@[^@]+\\.[^@]+$') &&
+             data.center is string && data.center.size() > 0 &&
+             data.status in ['pending', 'approved', 'rejected', 'registered'] &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp &&
+             (!('location' in data) || (data.location is map && data.location.coordinates is list && data.location.coordinates.size() == 2)) &&
+             (!('profilePicture' in data) || (data.profilePicture is string && data.profilePicture.matches('^https://firebasestorage\\.googleapis\\.com/.*$')));
     }
 
     // Participants collection
@@ -105,16 +31,25 @@ service cloud.firestore {
       // Anyone can read participant data for the global map
       allow read: if true;
       
-      // Only admins can create new participants
+      // Admin actions: full control over participant documents
       allow create: if isAdmin() && isValidParticipant();
-      
-      // Only admins can update participant data
-      allow update: if isAdmin() && 
-        isValidParticipant() && 
-        isWithinRateLimit();
-      
-      // Only admins can delete participants
       allow delete: if isAdmin();
+      allow update: if isAdmin() && isValidParticipant();
+
+      // Participant self-registration update:
+      // A non-admin user (the participant) can update their *own* document
+      // specifically for registration purposes, setting status to 'registered'
+      // and adding location, registeredAt, registeredBy. It also ensures they
+      // are not modifying other critical fields that only an admin should change.
+      allow update: if request.auth.uid == participantId &&
+                        request.resource.data.status == 'registered' &&
+                        request.resource.data.location is map &&
+                        request.resource.data.location.coordinates is list &&
+                        request.resource.data.location.coordinates.size() == 2 &&
+                        request.resource.data.registeredAt is timestamp &&
+                        request.resource.data.registeredBy == request.auth.uid &&
+                        // Ensure only these specific fields are being modified by the participant
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'location', 'registeredAt', 'registeredBy']);
     }
 
     // Admin users collection
@@ -130,6 +65,11 @@ service cloud.firestore {
     match /centerStats/{centerId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // Centers collection (new rule for public read access)
+    match /centers/{centerId} {
+      allow read: if true;
     }
 
     // Deny access to all other collections

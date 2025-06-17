@@ -1,42 +1,55 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import LocationPicker from '@/components/LocationPicker';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'react-hot-toast';
 
-export default function RegistrationPage() {
-  const params = useParams();
+interface Participant {
+  id: string;
+  name: string;
+  email: string;
+  location?: {
+    coordinates: [number, number];
+  };
+  center: string;
+  status: 'registered' | 'approved' | 'pending' | 'rejected';
+}
+
+export default function RegistrationPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const [participant, setParticipant] = useState<any>(null);
+  const { user } = useAuth();
+  const [participant, setParticipant] = useState<Participant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [location, setLocation] = useState<[number, number] | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [locationError, setLocationError] = useState('');
 
   useEffect(() => {
     const fetchParticipant = async () => {
+      if (!params.id) {
+        setError('Invalid registration ID');
+        setLoading(false);
+        return;
+      }
+
       try {
-        const docRef = doc(db, 'participants', params.id as string);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data.status === 'approved') {
-            setParticipant({
-              id: docSnap.id,
-              ...data
-            });
-          } else {
-            setError('This registration is not approved yet');
-          }
-        } else {
+        const participantRef = doc(db, 'participants', params.id);
+        const participantDoc = await getDoc(participantRef);
+
+        if (!participantDoc.exists()) {
           setError('Registration not found');
+          setLoading(false);
+          return;
         }
+
+        const participantData = participantDoc.data() as Participant;
+        setParticipant(participantData);
+        setLoading(false);
       } catch (err) {
-        setError('Failed to load registration data');
-      } finally {
+        console.error('Error fetching participant:', err);
+        setError('Failed to load registration details');
         setLoading(false);
       }
     };
@@ -44,111 +57,116 @@ export default function RegistrationPage() {
     fetchParticipant();
   }, [params.id]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!location) {
-      setError('Please select your location');
-      return;
-    }
+  const handleRegistration = async () => {
+    if (!participant) return;
 
-    setSubmitting(true);
     try {
-      const docRef = doc(db, 'participants', params.id as string);
-      await updateDoc(docRef, {
-        location: {
-          coordinates: location
-        },
-        status: 'registered',
-        registeredAt: new Date()
+      // Get user's location
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        });
       });
 
+      const coordinates: [number, number] = [
+        position.coords.longitude,
+        position.coords.latitude
+      ];
+
+      // Update participant document
+      const participantRef = doc(db, 'participants', participant.id);
+      await updateDoc(participantRef, {
+        status: 'registered',
+        location: {
+          coordinates
+        },
+        registeredAt: new Date(),
+        registeredBy: user?.uid
+      });
+
+      toast.success('Registration successful!');
       router.push('/registration-success');
     } catch (err) {
-      setError('Failed to complete registration');
-      setSubmitting(false);
+      console.error('Error during registration:', err);
+      if (err instanceof GeolocationPositionError) {
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            setLocationError('Location permission denied. Please enable location services to register.');
+            break;
+          case err.POSITION_UNAVAILABLE:
+            setLocationError('Location information is unavailable. Please try again.');
+            break;
+          case err.TIMEOUT:
+            setLocationError('Location request timed out. Please try again.');
+            break;
+          default:
+            setLocationError('Failed to get location. Please try again.');
+        }
+      } else {
+        setError('Failed to complete registration. Please try again.');
+      }
     }
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-gray-900">Error</h2>
-            <p className="mt-2 text-sm text-red-600">{error}</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+          <div className="text-red-500 text-center">
+            <p className="text-lg font-semibold">{error}</p>
           </div>
         </div>
       </div>
     );
   }
 
+  if (!participant) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-extrabold text-gray-900">Complete Registration</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Please select your location to complete the registration process
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+        <h1 className="text-2xl font-bold text-center mb-6">Complete Registration</h1>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <p className="mt-1 text-gray-900">{participant.name}</p>
+          </div>
 
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Name
-              </label>
-              <div className="mt-1">
-                <input
-                  type="text"
-                  value={participant.name}
-                  disabled
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50"
-                />
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <p className="mt-1 text-gray-900">{participant.email}</p>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <div className="mt-1">
-                <input
-                  type="email"
-                  value={participant.email}
-                  disabled
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50"
-                />
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Center</label>
+            <p className="mt-1 text-gray-900">{participant.center}</p>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Your Location
-              </label>
-              <LocationPicker
-                onLocationSelect={setLocation}
-                initialLocation={participant.location?.coordinates}
-              />
+          {locationError && (
+            <div className="text-red-500 text-sm mt-2">
+              {locationError}
             </div>
+          )}
 
-            <div>
-              <button
-                type="submit"
-                disabled={submitting || !location}
-                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
-                  ${submitting || !location 
-                    ? 'bg-indigo-400 cursor-not-allowed' 
-                    : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'}`}
-              >
-                {submitting ? 'Completing Registration...' : 'Complete Registration'}
-              </button>
-            </div>
-          </form>
+          <button
+            onClick={handleRegistration}
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+          >
+            Complete Registration
+          </button>
         </div>
       </div>
     </div>

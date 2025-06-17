@@ -43,7 +43,7 @@ export default function ConvocationQR({ eventId, eventName, eventDate, eventLoca
 
   return (
     <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-xl font-semibold mb-4">SRF Convocation QR Code</h2>
+      <h2 className="text-xl font-semibold mb-4">YAS Connect QR Code</h2>
       {qrCode ? (
         <div className="relative">
           <img src={qrCode} alt="Convocation QR Code" className="w-64 h-64" />

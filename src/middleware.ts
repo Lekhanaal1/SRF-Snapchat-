@@ -39,54 +39,73 @@ export async function middleware(request: NextRequest) {
   const isAuthenticated = request.cookies.has('auth_token'); // We'll set this when user signs in
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/signin', '/'];
+  const publicRoutes = ['/signin', '/', '/global-map', '/registration-success', '/register/'];
   
   // If the user is not authenticated and trying to access a protected route
-  if (!isAuthenticated && !publicRoutes.includes(pathname)) {
+  if (!isAuthenticated && !publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.redirect(new URL('/signin', request.url));
   }
 
   // If the user is authenticated and trying to access the sign-in page
   if (isAuthenticated && pathname === '/signin') {
-    return NextResponse.redirect(new URL('/map', request.url));
+    return NextResponse.redirect(new URL('/global-map', request.url));
   }
 
-  // Get the IP address from the request headers
-  const forwardedFor = request.headers.get('x-forwarded-for');
-  const ip = forwardedFor ? forwardedFor.split(',')[0] : '127.0.0.1';
-  
-  // Rate limit the request
-  const { success, limit, reset, remaining } = await ratelimit.limit(ip);
-  
-  // Add rate limit headers to the response
-  const response = NextResponse.next();
-  response.headers.set('X-RateLimit-Limit', limit.toString());
-  response.headers.set('X-RateLimit-Remaining', remaining.toString());
-  response.headers.set('X-RateLimit-Reset', reset.toString());
-  
-  // Add security headers
-  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleapis.com https://*.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.gstatic.com;"
-  );
-  
-  // If rate limit is exceeded, return a 429 response
-  if (!success) {
-    return new NextResponse('Too Many Requests', {
-      status: 429,
-      headers: {
-        'Retry-After': reset.toString(),
-        ...Object.fromEntries(response.headers),
-      },
-    });
+  try {
+    // Get the IP address from the request headers
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    const ip = forwardedFor ? forwardedFor.split(',')[0] : '127.0.0.1';
+    
+    // Rate limit the request
+    const { success, limit, reset, remaining } = await ratelimit.limit(ip);
+    
+    // Add rate limit headers to the response
+    const response = NextResponse.next();
+    response.headers.set('X-RateLimit-Limit', limit.toString());
+    response.headers.set('X-RateLimit-Remaining', remaining.toString());
+    response.headers.set('X-RateLimit-Reset', reset.toString());
+    
+    // Add security headers
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    response.headers.set('X-XSS-Protection', '1; mode=block');
+    response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://maps.googleapis.com https://api.mapbox.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleapis.com https://*.gstatic.com https://api.mapbox.com https://docs.mapbox.com; connect-src 'self' https://*.googleapis.com https://*.gstatic.com https://api.mapbox.com https://events.mapbox.com; worker-src 'self' blob:; child-src 'self' blob:;"
+    );
+    
+    // If rate limit is exceeded, return a 429 response
+    if (!success) {
+      return new NextResponse('Too Many Requests', {
+        status: 429,
+        headers: {
+          'Retry-After': reset.toString(),
+          ...Object.fromEntries(response.headers),
+        },
+      });
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('Rate limiting error:', error);
+    // If Redis is not available, allow the request to proceed without rate limiting
+    const response = NextResponse.next();
+    
+    // Still add security headers even if rate limiting fails
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    response.headers.set('X-XSS-Protection', '1; mode=block');
+    response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://maps.googleapis.com https://api.mapbox.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleapis.com https://*.gstatic.com https://api.mapbox.com https://docs.mapbox.com; connect-src 'self' https://*.googleapis.com https://*.gstatic.com https://api.mapbox.com https://events.mapbox.com; worker-src 'self' blob:; child-src 'self' blob:;"
+    );
+    
+    return response;
   }
-  
-  return response;
 }
 
 export const config = {

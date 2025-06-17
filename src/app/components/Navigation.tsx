@@ -42,7 +42,7 @@ export default function Navigation() {
                   <img
                     className="h-8 w-auto"
                     src="/srf-symbol.png"
-                    alt="SRF Connect"
+                    alt="YAS Connect"
                   />
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

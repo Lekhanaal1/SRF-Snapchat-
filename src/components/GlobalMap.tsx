@@ -27,6 +27,15 @@ interface Devotee {
   createdAt: any;
 }
 
+interface Center {
+  id: string;
+  name: string;
+  location: {
+    coordinates: [number, number];
+  };
+  isLotus?: boolean; // Indicates if this center should have a special lotus icon
+}
+
 interface CenterStats {
   [key: string]: {
     total: number;
@@ -67,85 +76,11 @@ export default function GlobalMap() {
     timeRange: 'all'
   });
   const [devotees, setDevotees] = useState<Devotee[]>([]);
+  const [centers, setCenters] = useState<Center[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const [mapBounds, setMapBounds] = useState<mapboxgl.LngLatBounds | null>(null);
 
-  // Memoized values
-  const centers = useMemo(() => Object.keys(centerStats), [centerStats]);
-  const filteredDevotees = useMemo(() => filterDevotees(devotees, filters), [devotees, filters]);
-
-  // Check if device is mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Initialize map
-  useEffect(() => {
-    if (!mapContainer.current) return;
-
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
-
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [-98.5795, 39.8283],
-      zoom: isMobile ? 2 : 3,
-      maxZoom: 15,
-      minZoom: 1,
-      renderWorldCopies: false,
-      attributionControl: false
-    });
-
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    map.current.addControl(new mapboxgl.AttributionControl(), 'bottom-right');
-
-    // Handle map movement
-    map.current.on('moveend', () => {
-      if (!map.current) return;
-      setMapBounds(map.current.getBounds());
-    });
-
-    // Listen for devotee data with pagination
-    const devoteesRef = collection(db, 'participants');
-    const q = query(
-      devoteesRef,
-      orderBy('createdAt', 'desc'),
-      limit(MAX_MARKERS)
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newDevotees = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Devotee[];
-      setDevotees(newDevotees);
-      updateStats(newDevotees);
-      setLoading(false);
-    }, (error) => {
-      console.error('Error fetching devotees:', error);
-      setError('Failed to load devotee data');
-      setLoading(false);
-    });
-
-    return () => {
-      unsubscribe();
-      if (map.current) {
-        map.current.remove();
-      }
-    };
-  }, [isMobile]);
-
-  // Update markers when filters or devotees change
-  useEffect(() => {
-    if (!map.current || !mapBounds) return;
-    updateMarkers(filteredDevotees, mapBounds);
-  }, [filteredDevotees, mapBounds]);
-
+  // Callback functions (defined before useMemo hooks that depend on them)
   const filterDevotees = useCallback((devotees: Devotee[], filters: FilterState) => {
     return devotees.filter(devotee => {
       const matchesCenter = !filters.center || devotee.center === filters.center;
@@ -205,35 +140,35 @@ export default function GlobalMap() {
     setCenterStats(stats);
   }, []);
 
-  const updateMarkers = useCallback((devotees: Devotee[], bounds: mapboxgl.LngLatBounds) => {
+  const updateAllMarkers = useCallback((devotees: Devotee[], centers: Center[], bounds: mapboxgl.LngLatBounds) => {
     // Clear existing markers and clusters
     Object.values(markers.current).forEach(marker => marker.remove());
     Object.values(clusters.current).forEach(cluster => cluster.remove());
     markers.current = {};
     clusters.current = {};
 
-    // Group markers by location
-    const markerGroups = new Map<string, Devotee[]>();
+    // Group devotee markers by location
+    const devoteeMarkerGroups = new Map<string, Devotee[]>();
     
     devotees.forEach(devotee => {
       if (!devotee.location?.coordinates) return;
       
       const key = `${devotee.location.coordinates[0]},${devotee.location.coordinates[1]}`;
-      if (!markerGroups.has(key)) {
-        markerGroups.set(key, []);
+      if (!devoteeMarkerGroups.has(key)) {
+        devoteeMarkerGroups.set(key, []);
       }
-      markerGroups.get(key)?.push(devotee);
+      devoteeMarkerGroups.get(key)?.push(devotee);
     });
 
-    // Create markers or clusters
-    markerGroups.forEach((group, key) => {
+    // Create devotee markers or clusters
+    devoteeMarkerGroups.forEach((group, key) => {
       const [lng, lat] = key.split(',').map(Number);
       const coordinates: [number, number] = [lng, lat];
 
       if (!bounds.contains(coordinates)) return;
 
       if (group.length === 1) {
-        // Single marker
+        // Single devotee marker
         const devotee = group[0];
         const el = document.createElement('div');
         el.className = 'marker';
@@ -251,58 +186,174 @@ export default function GlobalMap() {
         tooltip.textContent = devotee.name;
         markerContent.appendChild(tooltip);
 
-        markerContent.addEventListener('mouseenter', () => {
-          tooltip.style.opacity = '1';
-        });
-        markerContent.addEventListener('mouseleave', () => {
-          tooltip.style.opacity = '0';
-        });
-
         el.appendChild(markerContent);
+
+        // Show tooltip on hover
+        el.onmouseenter = () => { tooltip.classList.remove('opacity-0'); };
+        el.onmouseleave = () => { tooltip.classList.add('opacity-0'); };
 
         const marker = new mapboxgl.Marker(el)
           .setLngLat(coordinates)
           .addTo(map.current!);
-
         markers.current[devotee.id] = marker;
       } else {
-        // Cluster marker
-        const el = document.createElement('div');
-        el.className = 'cluster-marker';
-        
-        const clusterContent = document.createElement('div');
-        clusterContent.className = 'flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 text-white font-bold shadow-lg';
-        clusterContent.textContent = group.length.toString();
-        el.appendChild(clusterContent);
+        // Cluster marker (for devotees)
+        const clusterEl = document.createElement('div');
+        clusterEl.className = 'cluster-marker';
+        clusterEl.style.width = `${MARKER_SIZE}px`;
+        clusterEl.style.height = `${MARKER_SIZE}px`;
+        clusterEl.style.borderRadius = '50%';
+        clusterEl.style.backgroundColor = '#3B82F6';
+        clusterEl.style.color = 'white';
+        clusterEl.style.display = 'flex';
+        clusterEl.style.justifyContent = 'center';
+        clusterEl.style.alignItems = 'center';
+        clusterEl.style.fontWeight = 'bold';
+        clusterEl.style.cursor = 'pointer';
+        clusterEl.textContent = String(group.length);
 
-        const cluster = new mapboxgl.Marker(el)
+        clusterEl.onclick = () => {
+          if (map.current) {
+            map.current.flyTo({ center: coordinates, zoom: map.current.getZoom() + 2 });
+          }
+        };
+
+        const cluster = new mapboxgl.Marker(clusterEl)
           .setLngLat(coordinates)
           .addTo(map.current!);
-
-        // Add click handler to show popup with list of devotees
-        el.addEventListener('click', () => {
-          const popup = new mapboxgl.Popup({ offset: 25 })
-            .setLngLat(coordinates)
-            .setHTML(`
-              <div class="p-2">
-                <h3 class="font-semibold mb-2">Devotees in this area (${group.length})</h3>
-                <div class="space-y-1">
-                  ${group.map(d => `
-                    <div class="flex items-center space-x-2">
-                      <img src="${d.profilePicture || '/default-avatar.png'}" class="w-6 h-6 rounded-full" />
-                      <span class="text-sm">${d.name}</span>
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-            `);
-          popup.addTo(map.current!);
-        });
-
         clusters.current[key] = cluster;
       }
     });
+
+    // Create center markers
+    centers.forEach(center => {
+      if (!center.location?.coordinates) return;
+
+      const [lng, lat] = center.location.coordinates;
+      const coordinates: [number, number] = [lng, lat];
+
+      if (!bounds.contains(coordinates)) return;
+
+      const el = document.createElement('div');
+      el.className = 'center-marker';
+
+      const markerContent = document.createElement('div');
+      markerContent.className = 'relative';
+
+      const img = document.createElement('img');
+      img.className = 'w-10 h-10 rounded-full border-2 border-white shadow-lg';
+      img.src = center.isLotus ? '/lotus-icon.png' : '/center-icon.png'; // Use lotus icon if specified
+
+      markerContent.appendChild(img);
+
+      const tooltip = document.createElement('div');
+      tooltip.className = 'absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded whitespace-nowrap opacity-0 transition-opacity duration-200';
+      tooltip.textContent = center.name;
+      markerContent.appendChild(tooltip);
+
+      el.appendChild(markerContent);
+
+      // Show tooltip on hover
+      el.onmouseenter = () => { tooltip.classList.remove('opacity-0'); };
+      el.onmouseleave = () => { tooltip.classList.add('opacity-0'); };
+
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat(coordinates)
+        .addTo(map.current!);
+    });
   }, []);
+
+  // Memoized values
+  const availableCenterNames = useMemo(() => Object.keys(centerStats), [centerStats]);
+  const filteredDevotees = useMemo(() => filterDevotees(devotees, filters), [devotees, filters]);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Initialize map and fetch initial data
+  useEffect(() => {
+    if (!mapContainer.current) return;
+
+    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [-98.5795, 39.8283],
+      zoom: isMobile ? 2 : 3,
+      maxZoom: 15,
+      minZoom: 1,
+      renderWorldCopies: false,
+      attributionControl: false
+    });
+
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    map.current.addControl(new mapboxgl.AttributionControl(), 'bottom-right');
+
+    // Handle map movement
+    map.current.on('moveend', () => {
+      if (!map.current) return;
+      setMapBounds(map.current.getBounds());
+    });
+
+    // Listen for devotee data with pagination
+    const devoteesRef = collection(db, 'participants');
+    const qDevotees = query(
+      devoteesRef,
+      orderBy('createdAt', 'desc'),
+      limit(MAX_MARKERS)
+    );
+
+    const unsubscribeDevotees = onSnapshot(qDevotees, (snapshot) => {
+      const newDevotees = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Devotee[];
+      setDevotees(newDevotees);
+      updateStats(newDevotees);
+      setLoading(false);
+    }, (error) => {
+      console.error('Error fetching devotees:', error);
+      setError('Failed to load devotee data');
+      setLoading(false);
+    });
+
+    // Listen for center data
+    const centersRef = collection(db, 'centers');
+    const qCenters = query(centersRef);
+
+    const unsubscribeCenters = onSnapshot(qCenters, (snapshot) => {
+      const newCenters = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Center[];
+      setCenters(newCenters);
+    }, (error) => {
+      console.error('Error fetching centers:', error);
+      setError('Failed to load center data');
+    });
+
+    return () => {
+      unsubscribeDevotees();
+      unsubscribeCenters(); // Unsubscribe from centers listener
+      if (map.current) {
+        map.current.remove();
+      }
+    };
+  }, [isMobile]);
+
+  // Update markers when filters, devotees, centers, or mapBounds change
+  useEffect(() => {
+    if (!map.current || !mapBounds) return;
+    updateAllMarkers(filteredDevotees, centers, mapBounds);
+  }, [filteredDevotees, centers, mapBounds]);
 
   // Debounced search handler
   const handleSearch = useCallback(
@@ -361,13 +412,14 @@ export default function GlobalMap() {
             <div>
               <label className="block text-sm font-medium text-gray-700">Center</label>
               <select
+                id="center-filter"
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                 value={filters.center}
                 onChange={(e) => setFilters(prev => ({ ...prev, center: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="">All Centers</option>
-                {centers.map(center => (
-                  <option key={center} value={center}>{center}</option>
+                {availableCenterNames.map(centerName => (
+                  <option key={centerName} value={centerName}>{centerName}</option>
                 ))}
               </select>
             </div>
